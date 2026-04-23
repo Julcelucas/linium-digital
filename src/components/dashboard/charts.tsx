@@ -1,11 +1,11 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Activity, ChartColumn, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, ChartColumn } from "lucide-react";
 import { ModuleIcon } from "./icons";
 import { RoleDashboard, RoleType } from "./types";
 
-type RangeKey = "hoje" | "7d" | "30d";
+type RangeKey = "hoje" | "7d" | "30d"; 
 
 const rangeOptions: Array<{ key: RangeKey; label: string }> = [
   { key: "hoje", label: "Hoje" },
@@ -156,32 +156,6 @@ function MockLineChart({
   );
 }
 
-function MockBarChart({
-  values,
-  color,
-}: {
-  values: readonly number[];
-  color: string;
-}) {
-  const max = Math.max(...values, 1);
-
-  return (
-    <div className="h-24 flex items-end gap-2">
-      {values.map((value, index) => (
-        <div
-          key={`${value}-${index}`}
-          className="flex-1 rounded-t-md"
-          style={{
-            height: `${Math.round((value / max) * 100)}%`,
-            backgroundColor: color,
-            opacity: 0.85,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 function MockDonut({ value, color }: { value: number; color: string }) {
   const radius = 38;
   const circumference = 2 * Math.PI * radius;
@@ -239,9 +213,8 @@ function MissionControlCard({ accent, range }: { accent: string; range: RangeKey
     return () => clearInterval(timer);
   }, [range]);
 
-  const spark = useMemo(
-    () => Array.from({ length: 18 }, () => 10 + Math.floor(Math.random() * 70)),
-    [pulse.updatedAt]
+  const [spark] = useState<number[]>(() =>
+    Array.from({ length: 18 }, () => 10 + Math.floor(Math.random() * 70))
   );
 
   return (
@@ -384,71 +357,101 @@ export function RoleWorkspace({
   }
 
   if (role === "prestador") {
-    const values = roleSeries.prestador.bar[range];
-    const pipeline = roleSeries.prestador.pipeline[range];
+    const simpleQueue = [
+      { cliente: "Maria Lopes", servico: "Reparacao eletrica", horario: "09:30", valor: "AOA 18.000" },
+      { cliente: "Andre Silva", servico: "Montagem de tomadas", horario: "11:00", valor: "AOA 12.000" },
+      { cliente: "Dona Helena", servico: "Manutencao geral", horario: "14:15", valor: "AOA 22.000" },
+    ];
+
+    const todaySteps = [
+      "Responder pedidos pendentes",
+      "Confirmar horarios de hoje",
+      "Atualizar disponibilidade de amanha",
+      "Registar servicos concluidos",
+    ];
 
     return (
       <>
-        <section className="grid lg:grid-cols-[0.9fr_1.1fr] gap-4 mt-6">
+        <section className="grid lg:grid-cols-2 gap-4 mt-6">
           <article
             className="rounded-2xl border p-5 transition-all duration-500 hover:shadow-[0_8px_24px_rgba(13,27,42,0.08)]"
             style={{ backgroundColor: "#FFFFFF", borderColor: "#DEE4ED" }}
           >
             <p className="text-sm font-bold mb-3" style={{ color: "#0D1B2A" }}>
-              Pipeline de leads
+              O que fazer agora
             </p>
-            <div className="space-y-2">
-              {pipeline.map(([label, qty]) => (
-                <div key={label} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ backgroundColor: "#F4F6F9" }}>
-                  <span className="text-xs" style={{ color: "#2C3E50" }}>
-                    {label}
+            <ul className="space-y-2">
+              {todaySteps.map((step, index) => (
+                <li
+                  key={step}
+                  className="rounded-lg px-3 py-2 text-xs flex items-center justify-between"
+                  style={{ backgroundColor: "#F4F6F9", color: "#2C3E50" }}
+                >
+                  <span>{step}</span>
+                  <span
+                    className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+                    style={{ backgroundColor: "#EAF8EF", color: accent }}
+                  >
+                    {index + 1}
                   </span>
-                  <span className="text-xs font-bold" style={{ color: "#0D1B2A" }}>
-                    {qty}
-                  </span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </article>
 
           <article
             className="rounded-2xl border p-5 transition-all duration-500 hover:shadow-[0_8px_24px_rgba(13,27,42,0.08)]"
             style={{ backgroundColor: "#FFFFFF", borderColor: "#DEE4ED" }}
           >
-            <div className="flex items-center justify-between mb-3 gap-3">
-              <p className="text-sm font-bold" style={{ color: "#0D1B2A" }}>
-                Receita semanal
-              </p>
-              <div className="flex items-center gap-2">
-                <RangeSwitcher value={range} onChange={setRange} accent={accent} />
-                <Wallet size={16} style={{ color: accent }} />
-              </div>
-            </div>
-            <div key={range} className="transition-opacity duration-500">
-              <MockBarChart values={values} color={accent} />
-            </div>
-            <div className="grid sm:grid-cols-3 gap-3 mt-4">
-              {modules.map((module) => (
+            <p className="text-sm font-bold mb-3" style={{ color: "#0D1B2A" }}>
+              Pedidos de hoje
+            </p>
+            <div className="space-y-2">
+              {simpleQueue.map((item) => (
                 <div
-                  key={module.title}
-                  className="rounded-xl p-3 transition-transform duration-300 hover:-translate-y-0.5"
+                  key={item.cliente}
+                  className="rounded-lg px-3 py-2"
                   style={{ backgroundColor: "#F4F6F9" }}
                 >
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="text-xs font-bold" style={{ color: "#0D1B2A" }}>
-                      {module.title}
+                      {item.cliente}
                     </p>
-                    <ModuleIcon type={module.icon} color={accent} />
+                    <span className="text-[10px]" style={{ color: "#7F8C8D" }}>
+                      {item.horario}
+                    </span>
                   </div>
-                  <p className="text-[11px]" style={{ color: "#2C3E50" }}>
-                    {module.detail}
+                  <p className="text-[11px] mt-0.5" style={{ color: "#2C3E50" }}>
+                    {item.servico}
+                  </p>
+                  <p className="text-[11px] font-bold mt-0.5" style={{ color: accent }}>
+                    {item.valor}
                   </p>
                 </div>
               ))}
             </div>
           </article>
         </section>
-        <MissionControlCard accent={accent} range={range} />
+
+        <section className="grid sm:grid-cols-3 gap-3 mt-4">
+          {modules.map((module) => (
+            <article
+              key={module.title}
+              className="rounded-xl border p-3 transition-transform duration-300 hover:-translate-y-0.5"
+              style={{ backgroundColor: "#FFFFFF", borderColor: "#DEE4ED" }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-bold" style={{ color: "#0D1B2A" }}>
+                  {module.title}
+                </p>
+                <ModuleIcon type={module.icon} color={accent} />
+              </div>
+              <p className="text-[11px]" style={{ color: "#2C3E50" }}>
+                {module.detail}
+              </p>
+            </article>
+          ))}
+        </section>
       </>
     );
   }

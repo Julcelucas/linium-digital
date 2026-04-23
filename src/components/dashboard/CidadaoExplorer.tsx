@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState, type ComponentType, type CSSProperties } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useState, type ComponentType, type CSSProperties } from "react";
+import Link from "next/link";
 import {
   BadgeCheck,
   Building2,
@@ -25,6 +27,7 @@ import {
   Zap,
   Laptop,
 } from "lucide-react";
+import { MOCK_PROVIDERS, type Provider } from "./providers";
 
 type CategoryKey =
   | "all"
@@ -38,24 +41,13 @@ type CategoryKey =
   | "lazer"
   | "outros";
 
-type Provider = {
-  id: string;
-  type: "prestador" | "empresa";
-  name: string;
-  category: Exclude<CategoryKey, "all">;
-  categoryLabel: string;
-  imageUrl: string;
-  rating: number;
-  reviews: number;
-  description: string;
-  location: string;
-  phone: string;
-  verified: boolean;
-  responseTime: string;
-  tags: string[];
-  featured: boolean;
-  priceFrom: string;
-};
+type PriceTier = "all" | "economico" | "medio" | "premium";
+type SortKey =
+  | "relevancia"
+  | "avaliacao"
+  | "mais-avaliados"
+  | "menor-preco"
+  | "maior-preco";
 
 type CategoryDef = {
   key: CategoryKey;
@@ -76,268 +68,80 @@ const CATEGORIES: CategoryDef[] = [
   { key: "outros", label: "Outros", Icon: Sparkles },
 ];
 
-const MOCK_PROVIDERS: Provider[] = [
+const ANGOLA_BANKS = [
   {
-    id: "1",
-    type: "empresa",
-    name: "ByteWave Solutions",
-    category: "tecnologia",
-    categoryLabel: "Computadores & Assistência",
-    imageUrl:
-      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.8,
-    reviews: 173,
-    description:
-      "Venda e manutenção de computadores, redes empresariais e suporte técnico para casas e escritórios.",
-    location: "Luanda, Ingombota",
-    phone: "244923100101",
-    verified: true,
-    responseTime: "< 30 min",
-    tags: ["Hardware", "Redes", "Suporte"],
-    featured: true,
-    priceFrom: "AOA 12.000",
+    name: "BAI",
+    fullName: "Banco Angolano de Investimentos",
+    logo: "/banks/official/bai.svg",
   },
   {
-    id: "2",
-    type: "empresa",
-    name: "Sabor Capital",
-    category: "restaurantes",
-    categoryLabel: "Restaurante Premium",
-    imageUrl:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.7,
-    reviews: 294,
-    description:
-      "Experiência gastronómica com cozinha nacional e internacional, reservas para eventos e serviço executivo.",
-    location: "Luanda, Talatona",
-    phone: "244923200202",
-    verified: true,
-    responseTime: "Reserva imediata",
-    tags: ["Reservas", "Eventos", "Delivery"],
-    featured: true,
-    priceFrom: "AOA 9.000",
+    name: "BFA",
+    fullName: "Banco de Fomento Angola",
+    logo: "/banks/official/bfa.svg",
   },
   {
-    id: "3",
-    type: "empresa",
-    name: "Farmácia Vida+",
-    category: "farmacias",
-    categoryLabel: "Farmácia & Bem-estar",
-    imageUrl:
-      "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.9,
-    reviews: 412,
-    description:
-      "Medicamentos, produtos de saúde e atendimento farmacêutico com entrega rápida em vários bairros.",
-    location: "Luanda, Maianga",
-    phone: "244923300303",
-    verified: true,
-    responseTime: "< 20 min",
-    tags: ["24h", "Entrega", "Receitas"],
-    featured: true,
-    priceFrom: "AOA 2.500",
+    name: "BIC",
+    fullName: "Banco BIC",
+    logo: "/banks/official/bic.svg",
   },
   {
-    id: "4",
-    type: "prestador",
-    name: "Carlos Eletricista",
-    category: "eletricidade",
-    categoryLabel: "Serviços Elétricos",
-    imageUrl:
-      "https://images.unsplash.com/photo-1621905252472-e8f4f03f18a0?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.6,
-    reviews: 88,
-    description:
-      "Instalações, reparações e manutenção elétrica residencial com atendimento de urgência.",
-    location: "Luanda, Cazenga",
-    phone: "244923400404",
-    verified: true,
-    responseTime: "< 45 min",
-    tags: ["Urgência", "Residencial", "Inspeção"],
-    featured: false,
-    priceFrom: "AOA 7.500",
+    name: "Atlântico",
+    fullName: "Banco Atlântico",
+    logo: "/banks/official/atlantico.png",
   },
   {
-    id: "5",
-    type: "empresa",
-    name: "Escola Horizonte",
-    category: "escolas",
-    categoryLabel: "Educação Privada",
-    imageUrl:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.8,
-    reviews: 136,
-    description:
-      "Ensino de qualidade com atividades extracurriculares, laboratórios modernos e apoio pedagógico.",
-    location: "Luanda, Benfica",
-    phone: "244923500505",
-    verified: true,
-    responseTime: "Resposta no dia",
-    tags: ["Matrículas", "Transporte", "Atividades"],
-    featured: false,
-    priceFrom: "AOA 45.000",
-  },
-  {
-    id: "6",
-    type: "empresa",
-    name: "Banco Litoral",
-    category: "bancos",
-    categoryLabel: "Serviços Bancários",
-    imageUrl:
-      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.5,
-    reviews: 164,
-    description:
-      "Contas, créditos, pagamentos digitais e soluções financeiras para famílias e empresas.",
-    location: "Luanda, Mutamba",
-    phone: "244923600606",
-    verified: true,
-    responseTime: "Agendamento",
-    tags: ["Crédito", "Empresas", "Digital"],
-    featured: false,
-    priceFrom: "Sem custo inicial",
-  },
-  {
-    id: "7",
-    type: "empresa",
-    name: "Hotel Atlântico",
-    category: "hoteis",
-    categoryLabel: "Hospedagem & Eventos",
-    imageUrl:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.7,
-    reviews: 223,
-    description:
-      "Suites modernas, restaurante, salas para eventos e reservas para estadias curtas ou longas.",
-    location: "Luanda, Ilha",
-    phone: "244923700707",
-    verified: true,
-    responseTime: "Reserva imediata",
-    tags: ["Suites", "Eventos", "Business"],
-    featured: true,
-    priceFrom: "AOA 38.000",
-  },
-  {
-    id: "8",
-    type: "empresa",
-    name: "BluePool Center",
-    category: "lazer",
-    categoryLabel: "Piscinas & Lazer",
-    imageUrl:
-      "https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.6,
-    reviews: 97,
-    description:
-      "Centro de lazer com piscina, aulas aquáticas e programas para família durante toda a semana.",
-    location: "Luanda, Talatona",
-    phone: "244923800808",
-    verified: false,
-    responseTime: "< 2h",
-    tags: ["Família", "Aulas", "Fim de semana"],
-    featured: false,
-    priceFrom: "AOA 6.000",
-  },
-  {
-    id: "9",
-    type: "prestador",
-    name: "Marta TI Express",
-    category: "tecnologia",
-    categoryLabel: "Suporte Técnico",
-    imageUrl:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.9,
-    reviews: 121,
-    description:
-      "Atendimento ao domicílio para formatação, upgrades e solução de problemas em computadores e impressoras.",
-    location: "Luanda, Kilamba",
-    phone: "244923900909",
-    verified: true,
-    responseTime: "< 1h",
-    tags: ["Domicílio", "Windows", "Impressoras"],
-    featured: false,
-    priceFrom: "AOA 5.500",
-  },
-  {
-    id: "10",
-    type: "prestador",
-    name: "Chef Nando Eventos",
-    category: "restaurantes",
-    categoryLabel: "Catering & Eventos",
-    imageUrl:
-      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.7,
-    reviews: 76,
-    description:
-      "Serviço de catering para casamentos, aniversários e eventos corporativos com menus personalizados.",
-    location: "Luanda, Viana",
-    phone: "244924010010",
-    verified: true,
-    responseTime: "< 3h",
-    tags: ["Catering", "Eventos", "Buffet"],
-    featured: false,
-    priceFrom: "AOA 18.000",
-  },
-  {
-    id: "11",
-    type: "empresa",
-    name: "Colégio Nova Geração",
-    category: "escolas",
-    categoryLabel: "Ensino Médio",
-    imageUrl:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.6,
-    reviews: 59,
-    description:
-      "Instituição focada em excelência académica, inovação digital e preparação para o ensino superior.",
-    location: "Luanda, Rangel",
-    phone: "244924110110",
-    verified: false,
-    responseTime: "1 dia útil",
-    tags: ["Secundário", "Tecnologia", "Bolsas"],
-    featured: false,
-    priceFrom: "AOA 35.000",
-  },
-  {
-    id: "12",
-    type: "prestador",
-    name: "Nuno Hotel Concierge",
-    category: "hoteis",
-    categoryLabel: "Reserva & Concierge",
-    imageUrl:
-      "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.8,
-    reviews: 44,
-    description:
-      "Consultoria para reservas, organização de estadias e experiências premium para viagens em família.",
-    location: "Luanda, Ingombota",
-    phone: "244924210210",
-    verified: true,
-    responseTime: "< 1h",
-    tags: ["Concierge", "Reservas", "Premium"],
-    featured: false,
-    priceFrom: "AOA 10.000",
-  },
-  {
-    id: "13",
-    type: "empresa",
-    name: "MultiServ Angola",
-    category: "outros",
-    categoryLabel: "Serviços Diversos",
-    imageUrl:
-      "https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80",
-    rating: 4.5,
-    reviews: 68,
-    description:
-      "Serviços gerais para casa e empresa: apoio administrativo, logística leve e soluções rápidas para necessidades do dia a dia.",
-    location: "Luanda, Alvalade",
-    phone: "244924310310",
-    verified: true,
-    responseTime: "< 2h",
-    tags: ["Diversos", "Empresas", "Residencial"],
-    featured: false,
-    priceFrom: "AOA 4.500",
+    name: "BPC",
+    fullName: "Banco de Poupança e Crédito",
+    logo: "/banks/official/bpc.png",
   },
 ];
+
+const HERO_SLIDES = [
+  {
+    title: "Encontre serviços e negócios|ideais para o seu dia a dia",
+    description:
+      "Explore computadores, restaurantes, farmácias, bancos, escolas, hotéis, piscinas e muito mais em um só ambiente.",
+    backgroundImage:
+      "linear-gradient(110deg, rgba(2,6,23,0.86) 15%, rgba(2,6,23,0.56) 48%, rgba(2,6,23,0.42) 100%), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1800&q=80')",
+    ctaLabel: "Explorar agora",
+    ctaHref: "#explore-results",
+  },
+  {
+    title: "Evite filas no banco|abra a sua conta online",
+    description:
+      "Podes fazer a abertura de conta na nossa plataforma com BI em PDF, foto, assinatura e biometria em poucos passos.",
+    backgroundImage:
+      "linear-gradient(112deg, rgba(2,6,23,0.87) 12%, rgba(15,23,42,0.56) 45%, rgba(30,64,97,0.35) 100%), url('/hero/medium-shot-woman-with-afro-hairstyle.jpg')",
+    ctaLabel: "Abrir conta na plataforma",
+    ctaHref: "/bancos",
+  },
+] as const;
+
+const EXPLORE_PAGE_SIZE = 10;
+
+function parseAoaPrice(value: string): number | null {
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) {
+    return null;
+  }
+  return Number(digits);
+}
+
+function matchesPriceTier(price: number | null, tier: PriceTier): boolean {
+  if (tier === "all") {
+    return true;
+  }
+  if (price === null) {
+    return false;
+  }
+  if (tier === "economico") {
+    return price <= 10000;
+  }
+  if (tier === "medio") {
+    return price > 10000 && price <= 30000;
+  }
+  return price > 30000;
+}
 
 function StarRating({ value }: { value: number }) {
   const activeStars = Math.round(value);
@@ -370,12 +174,12 @@ function ProviderCard({ provider }: { provider: Provider }) {
       }}
     >
       <div className="relative h-40">
-        <img
+        <Image
           src={provider.imageUrl}
           alt={provider.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          referrerPolicy="no-referrer"
+          fill
+          className="object-cover"
+          unoptimized
         />
         <div
           className="absolute inset-0"
@@ -507,13 +311,13 @@ function ProviderCard({ provider }: { provider: Provider }) {
           >
             <Phone size={12} />
           </a>
-          <button
-            type="button"
-            className="text-[11px] font-semibold rounded-lg px-3 py-2"
+          <Link
+            href={`/provider/${provider.id}`}
+            className="text-[11px] font-semibold rounded-lg px-3 py-2 inline-flex items-center justify-center"
             style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
           >
             Ver perfil
-          </button>
+          </Link>
         </div>
       </div>
     </article>
@@ -524,14 +328,32 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryKey>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "prestador" | "empresa">("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [minRating, setMinRating] = useState<number>(0);
+  const [priceTier, setPriceTier] = useState<PriceTier>("all");
+  const [onlyVerified, setOnlyVerified] = useState(false);
+  const [sortBy, setSortBy] = useState<SortKey>("relevancia");
+  const [visibleCount, setVisibleCount] = useState(EXPLORE_PAGE_SIZE);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
+  const resetPagination = () => setVisibleCount(EXPLORE_PAGE_SIZE);
 
   const firstName = nome.split(" ")[0] ?? nome;
 
+  const locationOptions = useMemo(
+    () => ["all", ...Array.from(new Set(MOCK_PROVIDERS.map((provider) => provider.location)))],
+    []
+  );
+
   const filtered = useMemo(() => {
-    return MOCK_PROVIDERS.filter((provider) => {
+    const base = MOCK_PROVIDERS.filter((provider) => {
       const q = query.toLowerCase().trim();
       const matchCategory = activeCategory === "all" || provider.category === activeCategory;
       const matchType = typeFilter === "all" || provider.type === typeFilter;
+      const matchLocation = locationFilter === "all" || provider.location === locationFilter;
+      const matchRating = provider.rating >= minRating;
+      const matchVerified = !onlyVerified || provider.verified;
+      const matchPrice = matchesPriceTier(parseAoaPrice(provider.priceFrom), priceTier);
       const matchQuery =
         q.length === 0 ||
         provider.name.toLowerCase().includes(q) ||
@@ -539,22 +361,83 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
         provider.location.toLowerCase().includes(q) ||
         provider.description.toLowerCase().includes(q) ||
         provider.tags.some((tag) => tag.toLowerCase().includes(q));
-      return matchCategory && matchType && matchQuery;
+      return (
+        matchCategory &&
+        matchType &&
+        matchLocation &&
+        matchRating &&
+        matchVerified &&
+        matchPrice &&
+        matchQuery
+      );
     });
-  }, [activeCategory, query, typeFilter]);
+
+    return [...base].sort((a, b) => {
+      if (sortBy === "avaliacao") {
+        return b.rating - a.rating;
+      }
+      if (sortBy === "mais-avaliados") {
+        return b.reviews - a.reviews;
+      }
+      if (sortBy === "menor-preco") {
+        const pa = parseAoaPrice(a.priceFrom);
+        const pb = parseAoaPrice(b.priceFrom);
+        if (pa === null) return 1;
+        if (pb === null) return -1;
+        return pa - pb;
+      }
+      if (sortBy === "maior-preco") {
+        const pa = parseAoaPrice(a.priceFrom);
+        const pb = parseAoaPrice(b.priceFrom);
+        if (pa === null) return 1;
+        if (pb === null) return -1;
+        return pb - pa;
+      }
+      return Number(b.featured) - Number(a.featured) || Number(b.verified) - Number(a.verified) || b.reviews - a.reviews;
+    });
+  }, [
+    activeCategory,
+    locationFilter,
+    minRating,
+    onlyVerified,
+    priceTier,
+    query,
+    sortBy,
+    typeFilter,
+  ]);
 
   const featured = MOCK_PROVIDERS.filter((item) => item.featured);
-  const hasActiveFilters = query !== "" || activeCategory !== "all" || typeFilter !== "all";
+  const hasActiveFilters =
+    query !== "" ||
+    activeCategory !== "all" ||
+    typeFilter !== "all" ||
+    locationFilter !== "all" ||
+    minRating > 0 ||
+    priceTier !== "all" ||
+    onlyVerified ||
+    sortBy !== "relevancia";
+
+  const visibleProviders = filtered.slice(0, visibleCount);
+  const hasMoreProviders = filtered.length > visibleCount;
+  const activeSlide = HERO_SLIDES[activeSlideIndex];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlideIndex((current) => (current + 1) % HERO_SLIDES.length);
+    }, 7000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div>
       <section
         className="rounded-2xl overflow-hidden"
         style={{
-          backgroundImage:
-            "linear-gradient(110deg, rgba(2,6,23,0.86) 15%, rgba(2,6,23,0.56) 48%, rgba(2,6,23,0.42) 100%), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1800&q=80')",
+          backgroundImage: activeSlide.backgroundImage,
           backgroundSize: "cover",
           backgroundPosition: "center",
+          transition: "background-image 400ms ease",
         }}
       >
         <div className="px-6 py-7 md:px-10 md:py-10">
@@ -580,14 +463,44 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
             Olá, {firstName}
           </p>
           <h1 className="text-3xl md:text-5xl font-black leading-tight" style={{ color: "#FFFFFF" }}>
-            Encontre serviços e negócios
-            <br />
-            ideais para o seu dia a dia
+            {activeSlide.title.split("|").map((line, index) => (
+              <span key={line}>
+                {line}
+                {index < activeSlide.title.split("|").length - 1 && <br />}
+              </span>
+            ))}
           </h1>
           <p className="text-sm md:text-base mt-3 max-w-2xl" style={{ color: "#D1D5DB" }}>
-            Explore computadores, restaurantes, farmácias, bancos, escolas, hotéis,
-            piscinas e muito mais em um só ambiente.
+            {activeSlide.description}
           </p>
+
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            <Link
+              href={activeSlide.ctaHref}
+              className="text-xs md:text-sm font-semibold px-4 py-2 rounded-xl cursor-pointer"
+              style={{ backgroundColor: "#F4A300", color: "#0F172A" }}
+            >
+              {activeSlide.ctaLabel}
+            </Link>
+            <div className="inline-flex items-center gap-1">
+              {HERO_SLIDES.map((slide, index) => {
+                const isActive = index === activeSlideIndex;
+                return (
+                  <button
+                    key={slide.ctaLabel}
+                    type="button"
+                    onClick={() => setActiveSlideIndex(index)}
+                    className="h-2.5 rounded-full cursor-pointer"
+                    style={{
+                      width: isActive ? "24px" : "10px",
+                      backgroundColor: isActive ? "#F4A300" : "rgba(255,255,255,0.45)",
+                    }}
+                    aria-label={`Ir para slide ${index + 1}`}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
           <div
             className="mt-7 rounded-2xl p-3 md:p-4"
@@ -606,7 +519,10 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
                 <input
                   type="text"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    resetPagination();
+                  }}
                   placeholder="Pesquisar por serviço, empresa ou localização"
                   className="w-full text-sm pl-9 pr-9 py-2.5 rounded-xl"
                   style={{ border: "1px solid #E2E8F0", color: "#0F172A" }}
@@ -614,7 +530,10 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
                 {query && (
                   <button
                     type="button"
-                    onClick={() => setQuery("")}
+                    onClick={() => {
+                      setQuery("");
+                      resetPagination();
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                     style={{ color: "#64748B" }}
                   >
@@ -640,6 +559,61 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
         </div>
       </section>
 
+      <section className="pt-5">
+        <div
+          className="rounded-2xl border p-4 md:p-5"
+          style={{
+            background:
+              "linear-gradient(125deg, rgba(15,23,42,0.97) 20%, rgba(20,64,104,0.95) 100%)",
+            borderColor: "#1E3A61",
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="text-xs font-semibold" style={{ color: "#93C5FD" }}>
+                Bem exposto para clientes
+              </p>
+              <h2 className="text-xl md:text-2xl font-black mt-1" style={{ color: "#FFFFFF" }}>
+                Abertura de conta em bancos angolanos
+              </h2>
+              <p className="text-xs md:text-sm mt-2 max-w-2xl" style={{ color: "#CBD5E1" }}>
+                Evite filas: inicie o processo com BI em PDF, foto, assinatura e dados biometricos.
+              </p>
+            </div>
+            <Link
+              href="/bancos"
+              className="text-sm font-semibold px-5 py-2.5 rounded-xl cursor-pointer"
+              style={{ backgroundColor: "#F4A300", color: "#0F172A" }}
+            >
+              Comecar abertura
+            </Link>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-4">
+            {ANGOLA_BANKS.map((bank) => (
+              <div
+                key={bank.name}
+                className="rounded-xl border px-3 py-2.5 flex items-center gap-2"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.92)",
+                  borderColor: "rgba(148,163,184,0.4)",
+                }}
+              >
+                <Image src={bank.logo} alt={`Logo ${bank.name}`} width={28} height={28} />
+                <div className="min-w-0">
+                  <p className="text-xs font-black truncate" style={{ color: "#0F172A" }}>
+                    {bank.name}
+                  </p>
+                  <p className="text-[10px] truncate" style={{ color: "#64748B" }}>
+                    {bank.fullName}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="pt-6">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {CATEGORIES.map(({ key, label, Icon }) => {
@@ -648,7 +622,10 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
               <button
                 key={key}
                 type="button"
-                onClick={() => setActiveCategory(key)}
+                onClick={() => {
+                  setActiveCategory(key);
+                  resetPagination();
+                }}
                 className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold px-4 py-2 rounded-full border"
                 style={{
                   backgroundColor: active ? "#0F172A" : "#FFFFFF",
@@ -684,7 +661,7 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
         </section>
       )}
 
-      <section className="pt-7">
+      <section id="explore-results" className="pt-7">
         <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-black" style={{ color: "#0F172A" }}>
@@ -698,30 +675,157 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
             </span>
           </div>
           <div className="inline-flex items-center gap-2">
-            <SlidersHorizontal size={13} style={{ color: "#64748B" }} />
-            <div className="inline-flex rounded-lg p-0.5" style={{ backgroundColor: "#F1F5F9" }}>
-              {([
-                { key: "all", label: "Todos" },
-                { key: "empresa", label: "Empresas" },
-                { key: "prestador", label: "Prestadores" },
-              ] as const).map((option) => {
-                const active = typeFilter === option.key;
-                return (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => setTypeFilter(option.key)}
-                    className="text-[11px] font-semibold px-3 py-1.5 rounded-md"
-                    style={{
-                      backgroundColor: active ? "#FFFFFF" : "transparent",
-                      color: active ? "#0F172A" : "#64748B",
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
+            <Link
+              href="/bancos"
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+            >
+              Abrir conta bancária
+            </Link>
+            <div className="inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#64748B" }}>
+              <SlidersHorizontal size={13} />
+              Filtros avançados
             </div>
+          </div>
+        </div>
+
+        <div
+          className="rounded-2xl border p-3 md:p-4 mb-4"
+          style={{ backgroundColor: "#FFFFFF", borderColor: "#E2E8F0" }}
+        >
+          <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-2">
+            <label className="text-[11px]" style={{ color: "#64748B" }}>
+              Tipo
+              <select
+                value={typeFilter}
+                onChange={(event) => {
+                  setTypeFilter(event.target.value as "all" | "prestador" | "empresa");
+                  resetPagination();
+                }}
+                className="w-full mt-1 text-xs rounded-lg px-2.5 py-2"
+                style={{ border: "1px solid #E2E8F0", color: "#0F172A", backgroundColor: "#FFFFFF" }}
+              >
+                <option value="all">Todos</option>
+                <option value="empresa">Empresas</option>
+                <option value="prestador">Prestadores</option>
+              </select>
+            </label>
+
+            <label className="text-[11px]" style={{ color: "#64748B" }}>
+              Localização
+              <select
+                value={locationFilter}
+                onChange={(event) => {
+                  setLocationFilter(event.target.value);
+                  resetPagination();
+                }}
+                className="w-full mt-1 text-xs rounded-lg px-2.5 py-2"
+                style={{ border: "1px solid #E2E8F0", color: "#0F172A", backgroundColor: "#FFFFFF" }}
+              >
+                <option value="all">Todas</option>
+                {locationOptions
+                  .filter((location) => location !== "all")
+                  .map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <label className="text-[11px]" style={{ color: "#64748B" }}>
+              Avaliação mínima
+              <select
+                value={String(minRating)}
+                onChange={(event) => {
+                  setMinRating(Number(event.target.value));
+                  resetPagination();
+                }}
+                className="w-full mt-1 text-xs rounded-lg px-2.5 py-2"
+                style={{ border: "1px solid #E2E8F0", color: "#0F172A", backgroundColor: "#FFFFFF" }}
+              >
+                <option value="0">Qualquer</option>
+                <option value="4">4.0+</option>
+                <option value="4.5">4.5+</option>
+                <option value="4.8">4.8+</option>
+              </select>
+            </label>
+
+            <label className="text-[11px]" style={{ color: "#64748B" }}>
+              Faixa de preço
+              <select
+                value={priceTier}
+                onChange={(event) => {
+                  setPriceTier(event.target.value as PriceTier);
+                  resetPagination();
+                }}
+                className="w-full mt-1 text-xs rounded-lg px-2.5 py-2"
+                style={{ border: "1px solid #E2E8F0", color: "#0F172A", backgroundColor: "#FFFFFF" }}
+              >
+                <option value="all">Todas</option>
+                <option value="economico">Económico (até 10.000)</option>
+                <option value="medio">Médio (10.001 a 30.000)</option>
+                <option value="premium">Premium (acima de 30.000)</option>
+              </select>
+            </label>
+
+            <label className="text-[11px]" style={{ color: "#64748B" }}>
+              Ordenar por
+              <select
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(event.target.value as SortKey);
+                  resetPagination();
+                }}
+                className="w-full mt-1 text-xs rounded-lg px-2.5 py-2"
+                style={{ border: "1px solid #E2E8F0", color: "#0F172A", backgroundColor: "#FFFFFF" }}
+              >
+                <option value="relevancia">Relevância</option>
+                <option value="avaliacao">Melhor avaliação</option>
+                <option value="mais-avaliados">Mais avaliados</option>
+                <option value="menor-preco">Menor preço</option>
+                <option value="maior-preco">Maior preço</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyVerified((prev) => !prev);
+                resetPagination();
+              }}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full border"
+              style={{
+                backgroundColor: onlyVerified ? "#ECFDF3" : "#FFFFFF",
+                color: onlyVerified ? "#166534" : "#334155",
+                borderColor: onlyVerified ? "#86EFAC" : "#E2E8F0",
+              }}
+            >
+              Somente verificados
+            </button>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setActiveCategory("all");
+                  setTypeFilter("all");
+                  setLocationFilter("all");
+                  setMinRating(0);
+                  setPriceTier("all");
+                  setOnlyVerified(false);
+                  setSortBy("relevancia");
+                  resetPagination();
+                }}
+                className="text-[11px] font-semibold px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+              >
+                Limpar todos os filtros
+              </button>
+            )}
           </div>
         </div>
 
@@ -743,6 +847,7 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
                 setQuery("");
                 setActiveCategory("all");
                 setTypeFilter("all");
+                resetPagination();
               }}
               className="mt-4 text-xs font-semibold px-4 py-2 rounded-xl"
               style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
@@ -751,11 +856,26 @@ export function CidadaoExplorer({ nome }: { nome: string }) {
             </button>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((provider) => (
-              <ProviderCard key={provider.id} provider={provider} />
-            ))}
-          </div>
+          <>
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {visibleProviders.map((provider) => (
+                <ProviderCard key={provider.id} provider={provider} />
+              ))}
+            </div>
+
+            {hasMoreProviders && (
+              <div className="flex justify-center mt-5">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((current) => current + EXPLORE_PAGE_SIZE)}
+                  className="text-sm font-semibold px-5 py-2.5 rounded-xl cursor-pointer"
+                  style={{ backgroundColor: "#0F172A", color: "#FFFFFF" }}
+                >
+                  Ver mais
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

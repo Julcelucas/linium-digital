@@ -280,7 +280,7 @@ export default function RegisterPage() {
             ].map((s) => (
               <div key={s.n} className="flex items-start gap-4">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-black text-xs"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-black text-xs"
                   style={{
                     backgroundColor: "rgba(240,165,0,0.15)",
                     color: "#F0A500",
@@ -322,7 +322,7 @@ export default function RegisterPage() {
         className="flex-1 flex items-center justify-center p-8"
         style={{ backgroundColor: "#F4F6F9" }}
       >
-        <div className="w-full max-w-[440px]">
+          <div className="w-full max-w-110">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div
@@ -407,7 +407,7 @@ export default function RegisterPage() {
                       }}
                     >
                       <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all"
                         style={{
                           backgroundColor: selected ? "#F0A500" : "#F4F6F9",
                           color: selected ? "#0D1B2A" : "#7F8C8D",
@@ -431,7 +431,7 @@ export default function RegisterPage() {
                       </div>
                       {/* Radio dot */}
                       <div
-                        className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                        className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
                         style={{
                           borderColor: selected ? "#F0A500" : "#DEE4ED",
                           backgroundColor: selected ? "#F0A500" : "transparent",

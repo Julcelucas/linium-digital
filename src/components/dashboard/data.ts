@@ -42,32 +42,32 @@ export const roleExperience: Record<RoleType, RoleDashboard> = {
   },
   prestador: {
     accent: "#27AE60",
-    heading: "Painel do Prestador",
-    intro: "Gere leads, disponibilidade e reputacao para aumentar conversoes.",
+    heading: "Painel Simples do Prestador",
+    intro: "Veja pedidos, responda clientes e acompanhe os seus ganhos de forma simples.",
     metrics: [
-      { label: "Leads recebidos", value: "19", icon: "trend" },
-      { label: "Receita semanal", value: "AOA 186.000", icon: "wallet" },
-      { label: "Taxa de resposta", value: "92%", icon: "check" },
+      { label: "Pedidos de hoje", value: "7", icon: "trend" },
+      { label: "Ganhos da semana", value: "AOA 186.000", icon: "wallet" },
+      { label: "Pendentes", value: "3", icon: "check" },
     ],
     quickActions: [
-      "Responder 3 leads pendentes ate ao fim do dia",
-      "Atualizar disponibilidade para o fim de semana",
-      "Publicar novo servico em Logistica e Entregas",
+      "Responder 3 pedidos pendentes agora",
+      "Marcar horarios livres para amanha",
+      "Adicionar fotos de trabalhos recentes",
     ],
     modules: [
       {
-        title: "Fila de Pedidos",
-        detail: "7 solicitacoes por confirmar hoje.",
+        title: "Pedidos",
+        detail: "7 clientes aguardam resposta.",
         icon: "message",
       },
       {
-        title: "Validacao Linium",
-        detail: "Perfil verificado e certificado ativo.",
+        title: "Perfil",
+        detail: "Conta verificada e ativa.",
         icon: "check",
       },
       {
-        title: "Receitas",
-        detail: "Previsao mensal de AOA 620.000.",
+        title: "Ganhos",
+        detail: "Entradas desta semana atualizadas.",
         icon: "money",
       },
     ],
@@ -112,7 +112,7 @@ export const roleHeader = {
     gradient: "linear-gradient(120deg, #0D1B2A 0%, #1A3A5C 100%)",
   },
   prestador: {
-    subtitle: "Centro Operacional do Prestador",
+    subtitle: "Area Simples do Prestador",
     gradient: "linear-gradient(120deg, #0D1B2A 0%, #1C6B4E 100%)",
   },
   empresa: {
@@ -144,10 +144,10 @@ export const roleSignals = {
     emptyText: "Nenhum problema ativo com pedidos recentes. Tudo a correr bem.",
   },
   prestador: {
-    alertTitle: "Leads a expirar",
-    alertText: "3 leads vao expirar em 6 horas se nao responderes agora.",
-    emptyTitle: "Sem pedidos cancelados hoje",
-    emptyText: "Otimo sinal: nao houve cancelamentos no teu pipeline.",
+    alertTitle: "Pedidos a espera",
+    alertText: "Tem 3 pedidos sem resposta. Responda agora para nao perder clientes.",
+    emptyTitle: "Sem cancelamentos hoje",
+    emptyText: "Bom trabalho: nenhum cliente cancelou atendimento hoje.",
   },
   empresa: {
     alertTitle: "Meta mensal abaixo do planeado",

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCurrentUser,
@@ -16,21 +16,47 @@ import { RoleSignals } from "@/components/dashboard/RoleSignals";
 import { RoleMetrics } from "@/components/dashboard/RoleMetrics";
 import { RoleWorkspace } from "@/components/dashboard/charts";
 import { RoleActions } from "@/components/dashboard/RoleActions";
-import { CidadaoExplorer } from "@/components/dashboard/CidadaoExplorer";
+import { CidadaoExplorer } from "../../../components/dashboard/CidadaoExplorer";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<MockUser | null>(null);
+  const sessionRaw = useSyncExternalStore(
+    () => () => {},
+    () => localStorage.getItem("linium_session"),
+    () => null
+  );
+
+  const user = useMemo<MockUser | null>(() => {
+    if (!sessionRaw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(sessionRaw) as MockUser;
+    } catch {
+      return null;
+    }
+  }, [sessionRaw]);
 
   useEffect(() => {
     seedDemoUsers();
-    const sessionUser = getCurrentUser();
-    if (!sessionUser) {
+
+    if (!user) {
       router.replace("/login");
       return;
     }
-    setUser(sessionUser);
-  }, [router]);
+
+    // Verificar periodicamente se a sessão ainda é válida
+    const sessionCheck = setInterval(() => {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        logoutMockUser();
+        router.replace("/login");
+      }
+    }, 30000); // Verificar a cada 30 segundos
+
+    return () => clearInterval(sessionCheck);
+  }, [router, user]);
 
   if (!user) {
     return (

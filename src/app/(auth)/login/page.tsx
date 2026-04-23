@@ -32,18 +32,15 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPass, setShowPass] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [demoCredentials, setDemoCredentials] = useState<
-    Array<{ role: string; email: string; password: string }>
-  >([]);
+  const demoCredentials = getDemoCredentials();
 
   useEffect(() => {
     seedDemoUsers();
+
     const currentUser = getCurrentUser();
     if (currentUser) {
       router.replace("/dashboard");
-      return;
     }
-    setDemoCredentials(getDemoCredentials());
   }, [router]);
 
   const {
@@ -94,7 +91,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: "#F0A500" }}
           >
             <span className="text-white font-black text-xl leading-none">
@@ -136,7 +133,7 @@ export default function LoginPage() {
                 <CheckCircle2
                   size={18}
                   style={{ color: "#27AE60" }}
-                  className="flex-shrink-0"
+                  className="shrink-0"
                 />
                 <span className="text-sm" style={{ color: "#B0C4DE" }}>
                   {f}
@@ -177,7 +174,7 @@ export default function LoginPage() {
         className="flex-1 flex items-center justify-center p-8"
         style={{ backgroundColor: "#F4F6F9" }}
       >
-        <div className="w-full max-w-[380px]">
+        <div className="w-full max-w-95">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
             <div

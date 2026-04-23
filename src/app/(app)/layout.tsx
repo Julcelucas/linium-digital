@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getCurrentUser, seedDemoUsers } from "@/lib/mock-auth";
 
-export default function AuthLayout({
+export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -20,10 +20,15 @@ export default function AuthLayout({
       // Ignorar erro se não estiver no browser
     }
 
-    // Se utilizador já está autenticado, redirecionar para dashboard
+    // Se utilizador não está autenticado e tenta aceder a area protegida, redirecionar para login
     const user = getCurrentUser();
-    if (user && (pathname === "/login" || pathname === "/register")) {
-      router.replace("/dashboard");
+    if (
+      !user &&
+      (pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/provider") ||
+        pathname.startsWith("/bancos"))
+    ) {
+      router.replace("/login");
     }
   }, [router, pathname]);
 
